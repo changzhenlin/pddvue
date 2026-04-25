@@ -3,16 +3,22 @@ import { defineStore } from 'pinia';
 import { defaultAddress, products } from '../data/mock';
 
 const money = (value) => Number(value.toFixed(2));
+const cloneAddress = (value) => ({ ...value });
 
 export const useShopStore = defineStore('shop', () => {
   const cart = ref([]);
   const checkoutItems = ref([]);
+  const checkoutSource = ref(null);
   const latestOrder = ref(null);
-  const address = ref(defaultAddress);
+  const address = ref(cloneAddress(defaultAddress));
 
   const getProduct = (id) => products.find((product) => product.id === id);
 
-  const clampQuantity = (product, quantity) => Math.min(product.stock, Math.max(1, quantity));
+  const normalizeQuantity = (quantity) => {
+    const numericQuantity = Number(quantity);
+    return Number.isFinite(numericQuantity) ? Math.floor(numericQuantity) : 1;
+  };
+  const clampQuantity = (product, quantity) => Math.min(product.stock, Math.max(1, normalizeQuantity(quantity)));
 
   const hydrateItems = (items) =>
     items
@@ -36,7 +42,7 @@ export const useShopStore = defineStore('shop', () => {
     const thresholdDiscount = checkoutSubtotal.value >= 59 ? 8 : 0;
     return money((hasCampaign ? 3 : 0) + thresholdDiscount);
   });
-  const checkoutShipping = computed(() => (checkoutSubtotal.value > 0 ? 0 : 0));
+  const checkoutShipping = computed(() => 0);
   const checkoutTotal = computed(() =>
     money(Math.max(0, checkoutSubtotal.value - checkoutDiscount.value + checkoutShipping.value)),
   );
@@ -47,7 +53,7 @@ export const useShopStore = defineStore('shop', () => {
 
     const existing = cart.value.find((item) => item.productId === productId && item.spec === spec);
     if (existing) {
-      existing.quantity = clampQuantity(product, existing.quantity + quantity);
+      existing.quantity = clampQuantity(product, existing.quantity + normalizeQuantity(quantity));
       existing.selected = true;
       return;
     }
@@ -87,6 +93,7 @@ export const useShopStore = defineStore('shop', () => {
       spec,
       quantity,
     }));
+    checkoutSource.value = 'cart';
   }
 
   function checkoutNow(productId, spec, quantity) {
@@ -94,6 +101,7 @@ export const useShopStore = defineStore('shop', () => {
     if (!product) return;
 
     checkoutItems.value = [{ productId, spec, quantity: clampQuantity(product, quantity) }];
+    checkoutSource.value = 'direct';
   }
 
   function submitOrder() {
@@ -108,7 +116,7 @@ export const useShopStore = defineStore('shop', () => {
         title: product.title,
         price: product.price,
       })),
-      address: address.value,
+      address: cloneAddress(address.value),
       subtotal: checkoutSubtotal.value,
       discount: checkoutDiscount.value,
       shipping: checkoutShipping.value,
@@ -117,15 +125,19 @@ export const useShopStore = defineStore('shop', () => {
     };
 
     latestOrder.value = order;
-    const orderedKeys = new Set(checkoutItems.value.map((item) => `${item.productId}:${item.spec}`));
-    cart.value = cart.value.filter((item) => !orderedKeys.has(`${item.productId}:${item.spec}`));
+    if (checkoutSource.value === 'cart') {
+      const orderedKeys = new Set(checkoutItems.value.map((item) => `${item.productId}:${item.spec}`));
+      cart.value = cart.value.filter((item) => !orderedKeys.has(`${item.productId}:${item.spec}`));
+    }
     checkoutItems.value = [];
+    checkoutSource.value = null;
     return order;
   }
 
   return {
     cart,
     checkoutItems,
+    checkoutSource,
     latestOrder,
     address,
     cartItems,
