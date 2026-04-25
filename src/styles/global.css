@@ -87,3 +87,14 @@ a {
   font-size: 18px;
   font-weight: 900;
 }
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
