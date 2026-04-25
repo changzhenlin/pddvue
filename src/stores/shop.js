@@ -24,13 +24,13 @@ export const useShopStore = defineStore('shop', () => {
     items
       .map((item) => {
         const product = getProduct(item.productId);
-        return product ? { ...item, product } : null;
+        return product ? { ...item, quantity: clampQuantity(product, item.quantity), product } : null;
       })
       .filter(Boolean);
 
   const cartItems = computed(() => hydrateItems(cart.value));
   const selectedCartItems = computed(() => cartItems.value.filter((item) => item.selected));
-  const cartCount = computed(() => cart.value.reduce((sum, item) => sum + item.quantity, 0));
+  const cartCount = computed(() => cartItems.value.reduce((sum, item) => sum + item.quantity, 0));
   const allSelected = computed(() => cart.value.length > 0 && cart.value.every((item) => item.selected));
 
   const activeCheckoutItems = computed(() => hydrateItems(checkoutItems.value));
