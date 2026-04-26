@@ -4,6 +4,8 @@ import ProductCard from '../components/ProductCard.vue';
 import { coupons, products } from '../data/mock';
 import { useShopStore } from '../stores/shop';
 
+defineOptions({ name: 'CampaignView' });
+
 const router = useRouter();
 const shop = useShopStore();
 const campaignProducts = products.filter((product) => product.campaign);

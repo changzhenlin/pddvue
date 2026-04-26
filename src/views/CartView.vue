@@ -4,6 +4,8 @@ import { useRouter } from 'vue-router';
 import QuantityStepper from '../components/QuantityStepper.vue';
 import { useShopStore } from '../stores/shop';
 
+defineOptions({ name: 'CartView' });
+
 const router = useRouter();
 const shop = useShopStore();
 

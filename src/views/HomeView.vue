@@ -2,6 +2,8 @@
 import ProductCard from '../components/ProductCard.vue';
 import { channels, products } from '../data/mock';
 
+defineOptions({ name: 'HomeView' });
+
 const flashProducts = products.filter((product) => product.campaign).slice(0, 3);
 </script>
 

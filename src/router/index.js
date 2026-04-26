@@ -6,6 +6,9 @@ import CartView from '../views/CartView.vue';
 import CheckoutView from '../views/CheckoutView.vue';
 import SuccessView from '../views/SuccessView.vue';
 
+const cachedRouteNames = new Set(['home', 'campaign', 'cart']);
+const scrollMemory = new Map();
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -17,9 +20,19 @@ const router = createRouter({
     { path: '/success', name: 'success', component: SuccessView },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
-  scrollBehavior() {
-    return { top: 0 };
+  scrollBehavior(to, _from, savedPosition) {
+    return new Promise((resolve) => {
+      const target = savedPosition
+        ?? (cachedRouteNames.has(to.name) ? { top: scrollMemory.get(to.name) ?? 0 } : { top: 0 });
+      setTimeout(() => resolve(target), 200);
+    });
   },
+});
+
+router.beforeEach((_to, from) => {
+  if (cachedRouteNames.has(from.name)) {
+    scrollMemory.set(from.name, window.scrollY);
+  }
 });
 
 export default router;
